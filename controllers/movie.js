@@ -6,7 +6,8 @@ const {
 } = require('../errors');
 
 module.exports.getMovies = (req, res, next) => {
-  Movie.find({})
+  const owner = req.user._id;
+  Movie.find({ owner })
     .then((card) => res.status(200).send({ data: card }))
     .catch((err) => next(err));
 };
