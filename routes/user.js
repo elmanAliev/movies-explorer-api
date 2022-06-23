@@ -25,13 +25,6 @@ router.patch('/users/me', celebrate({
         'string.max': '"Имя" должно быть не длиннее 30 символов',
         'any.required': '"Имя" - обязательное поле',
       }),
-    password: Joi
-      .string()
-      .required()
-      .messages({
-        'string.empty': '"Пароль" не должен быть пустым',
-        'any.required': '"Пароль" - обязательное поле',
-      }),
   }),
 }), updateUser);
 
