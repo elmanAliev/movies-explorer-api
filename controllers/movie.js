@@ -3,6 +3,7 @@ const {
   NotFoundErr,
   BadRequestError,
   NotRulesErr,
+  ExistError,
 } = require('../errors');
 
 module.exports.getMovies = (req, res, next) => {
@@ -12,43 +13,43 @@ module.exports.getMovies = (req, res, next) => {
     .catch((err) => next(err));
 };
 
-module.exports.createMovie = (req, res, next) => {
+module.exports.createMovie = async (req, res, next) => {
   const {
-    movieId,
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
+    movieId, country, director, duration, year, description,
+    image, trailerLink, nameRU, nameEN, thumbnail,
   } = req.body;
 
-  Movie.create({
-    movieId,
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
-    owner: req.user._id,
-  })
-    .then((movie) => res.status(201).send({ data: movie }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadRequestError('Некорректные данные'));
-      } else {
-        next(err);
-      }
+  try {
+    const data = await Movie.find({ movieId });
+
+    if (data.length > 0) {
+      throw new ExistError(`Фильм с данным movieId уже существует: ${movieId}`);
+    }
+
+    const movie = await Movie.create({
+      movieId,
+      country,
+      director,
+      duration,
+      year,
+      description,
+      image,
+      trailerLink,
+      nameRU,
+      nameEN,
+      thumbnail,
+      owner: req.user._id,
     });
+
+    res.status(201).send({ data: movie });
+  } catch (err) {
+    if (err.name.includes('ValidationError')) {
+      const errMessage = Object.values(err.errors).map((errItem) => errItem.message).join(', ');
+      next(new BadRequestError(errMessage.trim()));
+    } else {
+      next(err);
+    }
+  }
 };
 
 module.exports.deleteMovie = (req, res, next) => {
