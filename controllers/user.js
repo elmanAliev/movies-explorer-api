@@ -34,18 +34,17 @@ module.exports.createUser = (req, res, next) => {
   const {
     name, email, password,
   } = req.body;
-  User.find({ email })
+  User.findOne({ email })
     .then((result) => {
       if (result.length === 0) {
         bcrypt.hash(password, 10)
           .then((hash) => User.create({
             name, email, password: hash,
           }))
-          .then(() => {
+          .then((user) => {
             res.status(200).send({
               data: {
-                name,
-                email,
+                _id: user._id, email: user.email,
               },
             });
           })
