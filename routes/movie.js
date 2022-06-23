@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
+const isUrl = require('validator/lib/isURL');
 
 const {
   getMovies,
@@ -11,17 +12,33 @@ router.get('/movies', getMovies);
 
 router.post('/movies', celebrate({
   body: Joi.object().keys({
-    movieId: Joi.number().integer().positive().required(),
     country: Joi.string().required(),
     director: Joi.string().required(),
-    duration: Joi.number().integer().positive().required(),
-    year: Joi.string().required().pattern(/\d{4}/),
+    duration: Joi.number().required(),
+    year: Joi.string().required(),
     description: Joi.string().required(),
-    image: Joi.string().required().pattern(/^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/),
-    trailerLink: Joi.string().required().pattern(/^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/),
+    image: Joi.string().custom((value, helpers) => {
+      if (isUrl(value)) {
+        return value;
+      }
+      return helpers.message('Поле image заполнено неверно');
+    }).required(),
+    trailerLink: Joi.string().custom((value, helpers) => {
+      if (isUrl(value)) {
+        return value;
+      }
+      return helpers.message('Поле trailerLink заполнено неверно');
+    }).required(),
+    thumbnail: Joi.string().custom((value, helpers) => {
+      if (isUrl(value)) {
+        return value;
+      }
+      return helpers.message('Поле thumbnail заполнено неверно');
+    }).required(),
+    owner: Joi.string().length(24).hex(),
+    movieId: Joi.number().required(),
     nameRU: Joi.string().required(),
     nameEN: Joi.string().required(),
-    thumbnail: Joi.string().required().pattern(/^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/),
   }),
 }), createMovie);
 
