@@ -30,35 +30,65 @@ module.exports.getCurrentUser = (req, res, next) => {
     });
 };
 
+// module.exports.createUser = (req, res, next) => {
+//   const {
+//     name, email, password,
+//   } = req.body;
+
+//   User.findOne({ email })
+//     .then((result) => {
+//       if (result.length === 0) {
+//         bcrypt.hash(password, 10)
+//           .then((hash) => User.create({
+//             name, email, password: hash,
+//           }))
+//           .then((user) => {
+//             res.status(200).send({
+//               data: {
+//                 _id: user._id, email: user.email,
+//               },
+//             });
+//           })
+//           .catch((err) => {
+//             if (err.name === 'ValidationError') {
+//               next(new BadRequestError('Некорректные данные'));
+//             } else {
+//               next(err);
+//             }
+//           });
+//       } else {
+//         next(new ExistError('Почта уже существует'));
+//       }
+//     })
+//     .catch(next);
+// };
+
 module.exports.createUser = (req, res, next) => {
   const {
     name, email, password,
   } = req.body;
-  User.findOne({ email })
-    .then((result) => {
-      if (result.length === 0) {
-        bcrypt.hash(password, 10)
-          .then((hash) => User.create({
-            name, email, password: hash,
-          }))
-          .then((user) => {
-            res.status(200).send({
-              data: {
-                _id: user._id, email: user.email,
-              },
-            });
-          })
-          .catch((err) => {
-            if (err.name === 'ValidationError') {
-              next(new BadRequestError('Некорректные данные'));
-            } else {
-              next(err);
-            }
-          });
-      } else {
-        next(new ExistError('Почта уже существует'));
-      }
+
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name,
+      email,
+      password: hash,
     })
+      .then((data) => {
+        res.status(200).send({
+          name: data.name,
+          email: data.email,
+        });
+      })
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          next(new BadRequestError('Переданны некорректные данные'));
+        } else if (err.code === 11000) {
+          next(new ExistError('Такая почта уже зарегистрирована'));
+        } else {
+          next(err);
+        }
+      }))
     .catch(next);
 };
 
